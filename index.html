@@ -369,18 +369,7 @@ function pollinate(prompt){
     const seed=Math.floor(Math.random()*99999);
     const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(prompt)+'?width=768&height=768&seed='+seed+'&nologo=true&enhance=true&model=flux';
     const img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=()=>{
-      try{
-        const c=document.createElement('canvas');
-        c.width=img.naturalWidth||768;
-        c.height=img.naturalHeight||768;
-        c.getContext('2d').drawImage(img,0,0);
-        res(c.toDataURL('image/jpeg',0.92));
-      }catch(e){
-        res(url);
-      }
-    };
+    img.onload=()=>res(url);
     img.onerror=()=>rej(new Error('Pollinations no respondió — intentá de nuevo'));
     setTimeout(()=>rej(new Error('Timeout — la imagen tardó demasiado')),90000);
     img.src=url;
@@ -438,10 +427,18 @@ function errCard(p){
 function dlOne(id,idx){
   const p=queue.find(q=>q.id===id);
   if(!p||!p.imgs[idx])return;
-  const a=document.createElement('a');
-  a.href=p.imgs[idx];
-  a.download=p.name.replace(/\s+/g,'-')+'-'+['fondo-blanco','detalle','modelo'][idx]+'.jpg';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const name=p.name.replace(/\s+/g,'-')+'-'+['fondo-blanco','detalle','modelo'][idx]+'.jpg';
+  fetch(p.imgs[idx])
+    .then(r=>r.blob())
+    .then(blob=>{
+      const burl=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=burl;a.download=name;
+      document.body.appendChild(a);a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(burl),1000);
+    })
+    .catch(()=>window.open(p.imgs[idx],'_blank'));
 }
 
 function dlProd(id){
