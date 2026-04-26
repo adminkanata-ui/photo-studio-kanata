@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Product Photo Studio</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f0f0f;color:#f0f0f0;padding:20px}
+h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.sub{font-size:12px;color:#555;margin-bottom:4px}
+.badge{display:inline-block;background:#14532d;color:#4ade80;font-size:10px;padding:2px 8px;border-radius:20px;margin-bottom:20px}
+.drop{border:2px dashed #2a2a2a;border-radius:12px;padding:30px;text-align:center;cursor:pointer;transition:all .2s;background:#111;margin-bottom:16px}
+.drop:hover,.drop.drag{border-color:#4ade80;background:#0d1f10}
+.drop h3{font-size:14px;margin-bottom:4px}
+.drop p{font-size:11px;color:#555}
+.drop input{display:none}
+.cat-row{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.cat-row label{font-size:12px;color:#888}
+.cat-row select{background:#1e1e1e;border:1px solid #2a2a2a;border-radius:8px;color:#f0f0f0;padding:7px 10px;font-size:12px;font-family:inherit;outline:none;cursor:pointer}
+.cat-row select:focus{border-color:#4ade80}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat{background:#161616;border:1px solid #222;border-radius:8px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px;color:#4ade80}
+.stat span{font-size:10px;color:#555}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.toolbar h2{font-size:12px;color:#666}
+.btns{display:flex;gap:6px}
+button{padding:6px 14px;border-radius:20px;border:1px solid #2a2a2a;background:#1e1e1e;color:#f0f0f0;font-size:12px;cursor:pointer;font-family:inherit}
+button:hover{background:#2a2a2a}
+button.go{background:#4ade80;color:#0f0f0f;border-color:#4ade80;font-weight:500}
+button.go:hover{opacity:.85}
+button:disabled{opacity:.35;cursor:not-allowed}
+.q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:20px}
+.qi{background:#161616;border:1px solid #222;border-radius:10px;overflow:hidden;position:relative}
+.qi img{width:100%;height:80px;object-fit:cover;display:block}
+.qi-foot{padding:5px 7px}
+.qi-name{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.qi-st{display:flex;align-items:center;gap:4px;font-size:10px;color:#555}
+.d{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.d.w{background:#444}
+.d.p{background:#fb923c;animation:bl 1s infinite}
+.d.ok{background:#4ade80}
+.d.er{background:#f87171}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
+.rm-btn{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.7);border:none;cursor:pointer;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s;padding:0}
+.qi:hover .rm-btn{opacity:1}
+.empty{text-align:center;padding:2.5rem;color:#333;font-size:13px}
+.prog{margin-bottom:20px;display:none}
+.prog.show{display:block}
+.prog-top{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:5px}
+.prog-bar{height:4px;background:#1e1e1e;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:#4ade80;transition:width .4s;border-radius:2px}
+.results{display:none}
+.results.show{display:block}
+.results-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.results-hdr h2{font-size:13px;color:#888}
+.r-card{background:#161616;border:1px solid #222;border-radius:12px;margin-bottom:12px;overflow:hidden}
+.r-top{padding:9px 14px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center}
+.r-top span{font-size:13px;font-weight:500}
+.r-imgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px}
+.r-img{text-align:center}
+.r-box{width:100%;aspect-ratio:1;border-radius:8px;border:1px solid #222;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:4px}
+.r-box img{width:100%;height:100%;object-fit:cover}
+.r-box.ld{flex-direction:column;gap:5px}
+.spin{width:18px;height:18px;border:2px solid #222;border-top-color:#4ade80;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.r-lbl{font-size:10px;color:#555;display:block;margin-bottom:2px}
+.r-dl{font-size:10px;color:#4ade80;cursor:pointer;background:none;border:none;padding:0;font-family:inherit}
+.log{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:8px;padding:8px 10px;font-size:10px;font-family:monospace;max-height:100px;overflow-y:auto;margin-top:16px}
+.l{color:#444;margin-bottom:1px}
+.l.ok{color:#4ade80}
+.l.er{color:#f87171}
+.l.in{color:#60a5fa}
+</style>
+</head>
+<body>
+
+<h1>Product Photo Studio</h1>
+<p class="sub">Subí fotos de empaques — generamos 3 fotos profesionales por producto</p>
+<span class="badge">100% Gratis · Sin API key · Sin registro</span>
+
+<div class="drop" id="drop" onclick="document.getElementById('fi').click()" ondragover="dov(event)" ondragleave="dol()" ondrop="ddr(event)">
+  <div style="font-size:32px;margin-bottom:8px">📦</div>
+  <h3>Arrastrá las fotos de tus empaques aquí</h3>
+  <p>JPG · PNG · WEBP · Hasta 50 por tanda</p>
+  <input type="file" id="fi" multiple accept="image/jpeg,image/png,image/webp" onchange="addF(this.files)">
+</div>
+
+<div class="cat-row">
+  <label>Categoría:</label>
+  <select id="cat">
+    <option value="product">General</option>
+    <option value="cosmetic beauty product">Cosmética</option>
+    <option value="clothing fashion item">Ropa</option>
+    <option value="electronic device">Electrónica</option>
+    <option value="home decor item">Hogar</option>
+    <option value="food beverage product">Alimentos</option>
+    <option value="sports fitness product">Deporte</option>
+  </select>
+</div>
+
+<div class="stats" id="statsRow" style="display:none">
+  <div class="stat"><b id="sTotal">0</b><span>productos</span></div>
+  <div class="stat"><b id="sDone">0</b><span>listos</span></div>
+  <div class="stat"><b id="sErr">0</b><span>errores</span></div>
+</div>
+
+<div class="toolbar">
+  <h2 id="qLbl">Cola vacía</h2>
+  <div class="btns">
+    <button id="clrBtn" onclick="clrQ()" style="display:none">Limpiar</button>
+    <button class="go" id="procBtn" onclick="startProc()" disabled>Procesar todo</button>
+  </div>
+</div>
+
+<div id="qGrid" class="q-grid"></div>
+<div id="emptyMsg" class="empty">Subí fotos arriba para empezar.</div>
+
+<div class="prog" id="prog">
+  <div class="prog-top"><span id="progTxt">Procesando...</span><span id="progPct">0%</span></div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+</div>
+
+<div class="results" id="results">
+  <div class="results-hdr">
+    <h2>Resultados</h2>
+    <button onclick="dlAll()">Descargar todo</button>
+  </div>
+  <div id="rCards"></div>
+</div>
+
+<div class="log" id="log"><div class="l in">› Sistema listo. Sin API key necesaria.</div></div>
+
+<script>
+let queue=[];
+let processing=false;
+let doneN=0,errN=0;
+
+function dov(e){e.preventDefault();document.getElementById('drop').classList.add('drag')}
+function dol(){document.getElementById('drop').classList.remove('drag')}
+function ddr(e){e.preventDefault();dol();addF(e.dataTransfer.files)}
+
+function addF(files){
+  let n=0;
+  Array.from(files).slice(0,50).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const id='i'+Date.now()+Math.random().toString(36).slice(2,5);
+    queue.push({id,file:f,name:'Producto '+(queue.length+1),status:'wait',imgs:[null,null,null],url:URL.createObjectURL(f)});
+    n++;
+  });
+  log(n+' fotos agregadas.','ok');
+  renderQ();
+}
+
+function renderQ(){
+  const g=document.getElementById('qGrid');
+  const em=document.getElementById('emptyMsg');
+  const sr=document.getElementById('statsRow');
+  const clr=document.getElementById('clrBtn');
+  const proc=document.getElementById('procBtn');
+  const ql=document.getElementById('qLbl');
+  if(!queue.length){
+    g.innerHTML='';em.style.display='block';sr.style.display='none';
+    clr.style.display='none';proc.disabled=true;
+    ql.textContent='Cola vacía';return;
+  }
+  em.style.display='none';sr.style.display='grid';
+  clr.style.display='';proc.disabled=processing;
+  ql.textContent=queue.length+' productos en cola';
+  document.getElementById('sTotal').textContent=queue.length;
+  document.getElementById('sDone').textContent=doneN;
+  document.getElementById('sErr').textContent=errN;
+  g.innerHTML=queue.map(p=>`<div class="qi">
+    <img src="${p.url}" alt="">
+    <div class="qi-foot">
+      <div class="qi-name">${p.name}</div>
+      <div class="qi-st"><span class="d ${p.status==='done'?'ok':p.status==='proc'?'p':p.status==='err'?'er':'w'}"></span>${p.status==='done'?'Listo':p.status==='proc'?'Generando...':p.status==='err'?'Error':'Pendiente'}</div>
+    </div>
+    ${!processing?`<button class="rm-btn" onclick="rm('${p.id}')">✕</button>`:''}
+  </div>`).join('');
+}
+
+function rm(id){
+  const i=queue.findIndex(p=>p.id===id);
+  if(i>-1){URL.revokeObjectURL(queue[i].url);queue.splice(i,1);}
+  renderQ();
+}
+
+function clrQ(){
+  queue.forEach(p=>URL.revokeObjectURL(p.url));
+  queue=[];doneN=0;errN=0;
+  document.getElementById('rCards').innerHTML='';
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('prog').classList.remove('show');
+  renderQ();
+}
+
+async function startProc(){
+  const pending=queue.filter(p=>p.status==='wait');
+  if(!pending.length){log('No hay productos pendientes.','er');return;}
+  processing=true;
+  document.getElementById('procBtn').disabled=true;
+  document.getElementById('clrBtn').style.display='none';
+  document.getElementById('prog').classList.add('show');
+  document.getElementById('results').classList.add('show');
+  let done=0;
+  for(const p of pending){
+    p.status='proc';renderQ();
+    setProg(done,pending.length,'Generando: '+p.name);
+    log('Procesando: '+p.name,'in');
+    addCard(p);
+    try{
+      const cat=document.getElementById('cat').value;
+      const colors=await getDominantColor(p.url);
+      const desc=`${colors} ${cat} from product package photo`;
+      const [i1,i2,i3]=await Promise.all([
+        pollinate(`professional ecommerce product photo, ${desc}, pure white background, studio lighting, ultra sharp, 4K commercial photography, no shadows, centered`),
+        pollinate(`macro close-up detail photo of ${desc}, white background, extreme sharpness, professional studio lighting, showing texture and quality`),
+        pollinate(`realistic lifestyle photo of attractive Latin American person naturally using ${desc}, warm natural light, modern home, authentic commercial photography`)
+      ]);
+      p.imgs=[i1,i2,i3];
+      p.status='done';doneN++;
+      updateCard(p);
+      log('✓ '+p.name+' listo.','ok');
+    }catch(e){
+      p.status='err';errN++;
+      errCard(p);
+      log('✗ '+p.name+': '+e.message,'er');
+    }
+    done++;renderQ();setProg(done,pending.length,'');
+  }
+  processing=false;
+  document.getElementById('procBtn').disabled=false;
+  document.getElementById('procBtn').textContent='Reprocesar errores';
+  document.getElementById('clrBtn').style.display='';
+  log('Completado. '+doneN+' ok, '+errN+' errores.','ok');
+}
+
+function getDominantColor(url){
+  return new Promise(res=>{
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      try{
+        const c=document.createElement('canvas');
+        c.width=50;c.height=50;
+        const ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0,50,50);
+        const d=ctx.getImageData(0,0,50,50).data;
+        let r=0,g=0,b=0,n=0;
+        for(let i=0;i<d.length;i+=4){
+          if(d[i+3]>128){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}
+        }
+        if(n===0){res('colorful');return;}
+        r=Math.round(r/n);g=Math.round(g/n);b=Math.round(b/n);
+        const colors=['red','orange','yellow','green','blue','purple','pink','brown','white','black','gray'];
+        const hue=Math.round(Math.atan2(Math.sqrt(3)*(g-b),2*r-g-b)*180/Math.PI+360)%360;
+        let color='colorful';
+        if(r>200&&g>200&&b>200)color='white';
+        else if(r<60&&g<60&&b<60)color='black';
+        else if(r>150&&g>150&&b>150)color='light gray';
+        else if(hue<20||hue>=340)color='red';
+        else if(hue<45)color='orange';
+        else if(hue<70)color='yellow';
+        else if(hue<150)color='green';
+        else if(hue<260)color='blue';
+        else if(hue<300)color='purple';
+        else color='pink';
+        res(color);
+      }catch(e){res('colorful');}
+    };
+    img.onerror=()=>res('colorful');
+    img.src=url;
+  });
+}
+
+function pollinate(prompt){
+  return new Promise((res,rej)=>{
+    const seed=Math.floor(Math.random()*99999);
+    const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=768&seed=${seed}&nologo=true&enhance=true&model=flux`;
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>{
+      try{
+        const c=document.createElement('canvas');
+        c.width=img.naturalWidth||768;c.height=img.naturalHeight||768;
+        c.getContext('2d').drawImage(img,0,0);
+        res(c.toDataURL('image/jpeg',0.92));
+      }catch(e){res(url);}
+    };
+    img.onerror=()=>rej(new Error('Error en Pollinations AI'));
+    setTimeout(()=>rej(new Error('Timeout — Pollinations tardó demasiado')),60000);
+    img.src=url;
+  });
+}
+
+function setProg(done,total,txt){
+  const pct=total>0?Math.round(done/total*100):0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progPct').textContent=pct+'%';
+  document.getElementById('progTxt').textContent=txt||'Procesando...';
+}
+
+function addCard(p){
+  const rc=document.getElementById('rCards');
+  const labels=['Fondo blanco','Detalle','Modelo'];
+  const el=document.createElement('div');
+  el.className='r-card';el.id='rc-'+p.id;
+  el.innerHTML=`<div class="r-top"><span>${p.name}</span><button onclick="dlProd('${p.id}')" id="dlb-${p.id}" disabled>Descargar 3</button></div>
+  <div class="r-imgs">${labels.map((l,i)=>`<div class="r-img">
+    <div class="r-box ld" id="rb-${p.id}-${i}"><div class="spin"></div><p style="font-size:9px;color:#444">Generando...</p></div>
+    <span class="r-lbl">${l}</span>
+    <button class="r-dl" id="rdb-${p.id}-${i}" onclick="dlOne('${p.id}',${i})" disabled>Descargar</button>
+  </div>`).join('')}</div>`;
+  rc.insertBefore(el,rc.firstChild);
+}
+
+function updateCard(p){
+  p.imgs.forEach((src,i)=>{
+    const b=document.getElementById('rb-'+p.id+'-'+i);
+    if(b){b.className='r-box';b.innerHTML=`<img src="${src}" alt="">`;}
+    const db=document.getElementById('rdb-'+p.id+'-'+i);
+    if(db)db.disabled=false;
+  });
+  const dlb=document.getElementById('dlb-'+p.id);
+  if(dlb)dlb.disabled=false;
+}
+
+function errCard(p){
+  [0,1,2].forEach(i=>{
+    const b=document.getElementById('rb-'+p.id+'-'+i);
+    if(b){b.className='r-box';b.innerHTML=`<p style="font-size:10px;color:#f87171;padding:8px">Error al generar</p>`;}
+  });
+}
+
+function dlOne(id,idx){
+  const p=queue.find(q=>q.id===id);
+  if(!p||!p.imgs[idx])return;
+  const a=document.createElement('a');
+  a.href=p.imgs[idx];
+  a.download=p.name.replace(/\s+/g,'-')+'-'+['fondo-blanco','detalle','modelo'][idx]+'.jpg';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function dlProd(id){[0,1,2].forEach(i=>setTimeout(()=>dlOne(id,i),i*500))}
+function dlAll(){queue.filter(p=>p.status==='done').forEach((p,pi)=>[0,1,2].forEach(i=>setTimeout(()=>dlOne(p.id,i),(pi*3+i)*300)))}
+
+function log(msg,type){
+  const l=document.getElementById('log');
+  const d=document.createElement('div');
+  d.className='l '+(type||'');
+  d.textContent='› '+msg;
+  l.appendChild(d);l.scrollTop=l.scrollHeight;
+}
+</script>
+</body>
+</html>
